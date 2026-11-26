@@ -1,0 +1,49 @@
+{
+  "name": "jeddah-morning",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/copy-pdfjs-assets.mjs",
+    "dev": "next dev -p 3000",
+    "prebuild": "node scripts/copy-pdfjs-assets.mjs",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --trace off",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "content:demo": "node scripts/generate-demo-content.mjs",
+    "content:validate": "vitest run tests/unit/content.test.ts",
+    "assets:icons": "node scripts/generate-icons.mjs",
+    "assets:demo-pdf": "node scripts/generate-demo-pdf.mjs"
+  },
+  "dependencies": {
+    "@fontsource/amiri": "^5.3.0",
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "@fontsource/noto-naskh-arabic": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "next": "^16.4.6",
+    "pdfjs-dist": "^6.5.438",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.20.7",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9",
+    "eslint-config-next": "^16.4.6",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.1.2"
+  },
+  "description": "JEDDAH MORNING — صباح جدة: personal Arabic daily magazine PWA",
+  "engines": {
+    "node": ">=20.9"
+  }
+}

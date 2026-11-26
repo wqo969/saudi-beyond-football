@@ -1,0 +1,47 @@
+{
+  "slug": "2026-12-01-morning",
+  "date": "2026-12-01",
+  "edition": "morning",
+  "number": 10,
+  "title": "عنوان العدد الداخلي",
+  "coverHeadline": "عنوان الغلاف الرئيسي",
+  "coverDek": "سطر تعريفي قصير تحت عنوان الغلاف",
+  "coverSection": "personal-growth",
+  "status": "draft",
+  "isDemo": true,
+  "articles": [
+    {
+      "id": "personal-growth-1",
+      "section": "personal-growth",
+      "kicker": "مقال",
+      "title": "عنوان المقال",
+      "dek": "مقدمة المقال",
+      "author": "اسم الكاتب",
+      "readingMinutes": 3,
+      "isDemo": true,
+      "sources": [],
+      "body": [
+        { "type": "p", "text": "فقرة." },
+        { "type": "h", "text": "عنوان فرعي" },
+        { "type": "quote", "text": "اقتباس", "cite": "القائل" },
+        { "type": "list", "items": ["بند أول", "بند ثانٍ"] },
+        { "type": "facts", "title": "حقائق", "items": [{ "label": "تسمية", "value": "قيمة" }] },
+        { "type": "puzzle", "question": "سؤال", "hint": "تلميح", "answer": "الحل" },
+        { "type": "link", "label": "نص الرابط", "url": "https://example.com" }
+      ]
+    },
+    {
+      "id": "news-1",
+      "section": "news",
+      "title": "مثال: قسم يعتمد على بيانات حية — المصدر إلزامي حين يكون isDemo=false",
+      "isDemo": false,
+      "sources": [{ "name": "اسم الجهة المصدر", "url": "https://example.com/source" }],
+      "body": [{ "type": "p", "text": "نص الخبر كما ورد في المصدر مع الإسناد." }]
+    }
+  ],
+  "_notes": [
+    "الأقسام المتاحة: weather, news, football, fashion, queer-culture, ai, careers, saudi-economy, personal-growth, song, screen, discovery, puzzle",
+    "status: draft | scheduled | published — المجدول يحتاج publishAt بصيغة 2026-12-01T06:00:00+03:00",
+    "احذف حقل _notes أو اتركه؛ الحقول غير المعروفة تُتجاهل"
+  ]
+}

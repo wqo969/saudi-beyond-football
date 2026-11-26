@@ -1,0 +1,32 @@
+// Renders the PWA / Apple touch icons from an HTML design using the pre-installed Playwright Chromium.
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { fontFaces } from "./_fonts.mjs";
+
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const out = path.join(root, "public", "icons");
+mkdirSync(out, { recursive: true });
+
+const html = (size, maskable) => `<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces(root)}
+html,body{margin:0;width:${size}px;height:${size}px}
+.i{width:100%;height:100%;background:radial-gradient(circle at 72% 22%,#2f5541 0,#1e3a2c 45%,#12251b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.sun{position:absolute;width:${size * 0.16}px;height:${size * 0.16}px;border-radius:50%;background:#c9aa72;top:${size * (maskable ? 0.2 : 0.13)}px;right:${size * (maskable ? 0.24 : 0.17)}px;opacity:.9}
+.t{font-family:Amiri;font-weight:700;color:#f5efe0;font-size:${size * (maskable ? 0.27 : 0.34)}px;line-height:1;margin-top:${size * 0.04}px}
+.r{width:${size * (maskable ? 0.42 : 0.56)}px;border-top:${Math.max(1, size / 128)}px solid #c9aa72;margin-top:${size * 0.06}px}
+.l{font-family:Playfair;color:#c9aa72;letter-spacing:.25em;font-size:${size * (maskable ? 0.045 : 0.06)}px;margin-top:${size * 0.04}px}
+</style></head><body><div class="i"><div class="sun"></div><div class="t" dir="rtl">صباح</div><div class="r"></div><div class="l">JEDDAH</div></div></body></html>`;
+
+const browser = await chromium.launch();
+const page = await browser.newPage();
+for (const [name, size, maskable] of [["icon-192.png", 192, false], ["icon-512.png", 512, false], ["icon-maskable-512.png", 512, true], ["apple-touch-icon.png", 180, false]]) {
+  await page.setViewportSize({ width: size, height: size });
+  await page.setContent(html(size, maskable));
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: path.join(out, name), omitBackground: false });
+}
+await browser.close();
+console.log("[icons] generated in public/icons/");

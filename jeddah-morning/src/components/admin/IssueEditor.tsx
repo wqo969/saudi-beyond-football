@@ -1,0 +1,238 @@
+"use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { saveIssueAction } from "@/app/admin/actions";
+import { blocksToText, isoToRiyadhLocal, riyadhLocalToIso, sourcesToText, textToBlocks, textToSources } from "@/lib/editor-format";
+import type { Issue, IssueStatus } from "@/lib/schema";
+import { SECTIONS, SECTION_KEYS, type SectionKey } from "@/lib/sections";
+
+interface ArticleDraft {
+  key: string;
+  id: string;
+  section: SectionKey;
+  kicker: string;
+  title: string;
+  dek: string;
+  author: string;
+  readingMinutes: string;
+  isDemo: boolean;
+  sources: string;
+  body: string;
+  open: boolean;
+}
+
+interface IssueDraft {
+  date: string;
+  edition: "morning" | "evening";
+  number: string;
+  title: string;
+  coverHeadline: string;
+  coverDek: string;
+  coverSection: SectionKey | "";
+  status: IssueStatus;
+  publishAt: string;
+  isDemo: boolean;
+  pdfFile: string;
+  articles: ArticleDraft[];
+}
+
+let counter = 0;
+const newKey = () => `k${Date.now().toString(36)}${counter++}`;
+
+function toDraft(issue: Issue | null, defaults: { date: string; number: number }): IssueDraft {
+  if (!issue)
+    return {
+      date: defaults.date, edition: "morning", number: String(defaults.number), title: "", coverHeadline: "", coverDek: "", coverSection: "",
+      status: "draft", publishAt: "", isDemo: false, pdfFile: "", articles: [],
+    };
+  return {
+    date: issue.date, edition: issue.edition, number: String(issue.number), title: issue.title, coverHeadline: issue.coverHeadline,
+    coverDek: issue.coverDek ?? "", coverSection: issue.coverSection ?? "", status: issue.status, publishAt: isoToRiyadhLocal(issue.publishAt),
+    isDemo: issue.isDemo, pdfFile: issue.pdf?.file ?? "",
+    articles: issue.articles.map((a) => ({
+      key: newKey(), id: a.id, section: a.section, kicker: a.kicker ?? "", title: a.title, dek: a.dek ?? "", author: a.author ?? "",
+      readingMinutes: a.readingMinutes ? String(a.readingMinutes) : "", isDemo: a.isDemo, sources: sourcesToText(a.sources), body: blocksToText(a.body), open: false,
+    })),
+  };
+}
+
+function fromDraft(d: IssueDraft) {
+  const slug = `${d.date}-${d.edition}`;
+  return {
+    slug, date: d.date, edition: d.edition, number: Number(d.number), title: d.title, coverHeadline: d.coverHeadline,
+    coverDek: d.coverDek || undefined, coverSection: d.coverSection || undefined, status: d.status,
+    publishAt: riyadhLocalToIso(d.publishAt), isDemo: d.isDemo, pdf: d.pdfFile ? { file: d.pdfFile } : undefined,
+    articles: d.articles.map((a, i) => ({
+      id: a.id || `${a.section}-${i + 1}`, section: a.section, kicker: a.kicker || undefined, title: a.title, dek: a.dek || undefined,
+      author: a.author || undefined, readingMinutes: a.readingMinutes ? Number(a.readingMinutes) : undefined, isDemo: a.isDemo,
+      sources: textToSources(a.sources), body: textToBlocks(a.body),
+    })),
+  };
+}
+
+const input = "w-full rounded border border-rule bg-paper px-3 py-2 text-sm outline-none focus:border-gold";
+const label = "mb-1 block text-xs font-semibold text-muted";
+
+export function IssueEditor({ issue, defaults }: { issue: Issue | null; defaults: { date: string; number: number } }) {
+  const router = useRouter();
+  const isNew = !issue;
+  const [d, setD] = useState<IssueDraft>(() => toDraft(issue, defaults));
+  const [errors, setErrors] = useState<string[]>([]);
+  const [saved, setSaved] = useState(false);
+  const [pending, start] = useTransition();
+
+  const set = <K extends keyof IssueDraft>(k: K, v: IssueDraft[K]) => { setSaved(false); setD((s) => ({ ...s, [k]: v })); };
+  const setA = (key: string, patch: Partial<ArticleDraft>) => { setSaved(false); setD((s) => ({ ...s, articles: s.articles.map((a) => (a.key === key ? { ...a, ...patch } : a)) })); };
+  const move = (idx: number, delta: number) =>
+    setD((s) => {
+      const arr = [...s.articles];
+      const j = idx + delta;
+      if (j < 0 || j >= arr.length) return s;
+      [arr[idx], arr[j]] = [arr[j], arr[idx]];
+      return { ...s, articles: arr };
+    });
+  const addArticle = () =>
+    setD((s) => ({
+      ...s,
+      articles: [...s.articles, { key: newKey(), id: "", section: "news", kicker: "", title: "", dek: "", author: "", readingMinutes: "", isDemo: s.isDemo, sources: "", body: "", open: true }],
+    }));
+
+  function save() {
+    start(async () => {
+      const r = await saveIssueAction(JSON.stringify(fromDraft(d)), isNew);
+      if (!r.ok) {
+        setErrors(r.errors ?? ["خطأ غير معروف"]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      setErrors([]);
+      setSaved(true);
+      if (isNew && r.slug) router.replace(`/admin/issues/${r.slug}`);
+      else router.refresh();
+    });
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">{isNew ? "عدد جديد" : `تحرير: ${issue.title}`}</h1>
+        <div className="flex gap-2">
+          {!isNew && <Link href={`/issue/${issue.slug}`} className="rounded-full border border-rule px-4 py-2 text-sm">معاينة</Link>}
+          <button type="button" onClick={save} disabled={pending} className="rounded-full bg-forest px-6 py-2 text-sm text-on-forest disabled:opacity-60" data-testid="save-issue">
+            {pending ? "جارٍ الحفظ…" : "حفظ"}
+          </button>
+        </div>
+      </div>
+
+      {errors.length > 0 && (
+        <div role="alert" className="border border-demo/50 bg-demo/10 p-4 text-sm text-demo">
+          <p className="font-semibold">لم يُحفظ العدد:</p>
+          <ul className="mt-1 list-disc ps-5">{errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+        </div>
+      )}
+      {saved && <p role="status" className="border border-forest-soft/50 bg-forest-soft/10 p-3 text-sm">تم الحفظ ✓</p>}
+
+      <section className="grid gap-4 border border-rule p-4 sm:grid-cols-2">
+        <h2 className="font-[family-name:var(--font-display)] text-xl font-bold sm:col-span-2">بيانات العدد</h2>
+        <label><span className={label}>التاريخ</span><input type="date" className={input} value={d.date} disabled={!isNew} onChange={(e) => set("date", e.target.value)} /></label>
+        <label><span className={label}>نوع العدد</span>
+          <select className={input} value={d.edition} disabled={!isNew} onChange={(e) => set("edition", e.target.value as IssueDraft["edition"])}>
+            <option value="morning">صباحي</option><option value="evening">مسائي</option>
+          </select>
+        </label>
+        <label><span className={label}>رقم العدد</span><input type="number" min={1} className={input} value={d.number} onChange={(e) => set("number", e.target.value)} /></label>
+        <label><span className={label}>عنوان العدد (داخلي)</span><input className={input} value={d.title} onChange={(e) => set("title", e.target.value)} placeholder="مثال: عدد الخميس الصباحي" /></label>
+        <label className="sm:col-span-2"><span className={label}>عنوان الغلاف</span><input className={`${input} font-[family-name:var(--font-display)] text-lg`} value={d.coverHeadline} onChange={(e) => set("coverHeadline", e.target.value)} /></label>
+        <label className="sm:col-span-2"><span className={label}>سطر الغلاف التعريفي</span><textarea rows={2} className={input} value={d.coverDek} onChange={(e) => set("coverDek", e.target.value)} /></label>
+        <label><span className={label}>قسم الغلاف</span>
+          <select className={input} value={d.coverSection} onChange={(e) => set("coverSection", e.target.value as SectionKey | "")}>
+            <option value="">— أول مقال —</option>
+            {SECTION_KEYS.map((k) => <option key={k} value={k}>{SECTIONS[k].name}</option>)}
+          </select>
+        </label>
+        <label><span className={label}>ملف PDF (اسم الملف المرفوع)</span><input className={input} dir="ltr" value={d.pdfFile} onChange={(e) => set("pdfFile", e.target.value)} placeholder="2026-11-26-morning.pdf" /></label>
+        <fieldset className="sm:col-span-2">
+          <legend className={label}>النشر</legend>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            {(["draft", "scheduled", "published"] as const).map((s) => (
+              <label key={s} className="flex items-center gap-1.5">
+                <input type="radio" name="status" checked={d.status === s} onChange={() => set("status", s)} />
+                {{ draft: "مسودة", scheduled: "مجدول", published: "منشور" }[s]}
+              </label>
+            ))}
+            {d.status === "scheduled" && (
+              <label className="flex items-center gap-2">
+                <span className="text-xs text-muted">موعد النشر (توقيت الرياض)</span>
+                <input type="datetime-local" className={`${input} w-auto`} value={d.publishAt} onChange={(e) => set("publishAt", e.target.value)} />
+              </label>
+            )}
+          </div>
+        </fieldset>
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <input type="checkbox" checked={d.isDemo} onChange={(e) => set("isDemo", e.target.checked)} />
+          محتوى تجريبي (يظهر للقارئ بشارة «تجريبي»)
+        </label>
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between">
+          <h2 className="font-[family-name:var(--font-display)] text-xl font-bold">المقالات ({d.articles.length})</h2>
+          <button type="button" onClick={addArticle} className="rounded-full border border-forest px-4 py-1.5 text-sm" data-testid="add-article">+ مقال</button>
+        </div>
+        <details className="mt-2 text-xs text-muted">
+          <summary className="cursor-pointer">صيغة كتابة النص</summary>
+          <pre className="mt-2 whitespace-pre-wrap rounded bg-paper-2 p-3 leading-6">{`سطر فارغ = فقرة جديدة
+## عنوان فرعي
+> اقتباس
+— القائل
+- بند قائمة
+|| عنوان جدول الحقائق
+| التسمية | القيمة
+لغز: السؤال
+تلميح: ...
+الحل: ...
+[نص الرابط](https://example.com)`}</pre>
+        </details>
+        <ol className="mt-4 space-y-3">
+          {d.articles.map((a, idx) => (
+            <li key={a.key} className="border border-rule">
+              <div className="flex items-center gap-2 bg-paper-2 px-3 py-2">
+                <button type="button" onClick={() => setA(a.key, { open: !a.open })} className="min-w-0 flex-1 text-start">
+                  <span className="kicker">{SECTIONS[a.section].name}</span>
+                  <span className="block truncate font-[family-name:var(--font-display)] font-bold">{a.title || "مقال بلا عنوان"}</span>
+                </button>
+                <button type="button" onClick={() => move(idx, -1)} aria-label="أعلى" className="px-2 text-muted">▲</button>
+                <button type="button" onClick={() => move(idx, 1)} aria-label="أسفل" className="px-2 text-muted">▼</button>
+                <button type="button" onClick={() => confirm("حذف المقال؟") && setD((s) => ({ ...s, articles: s.articles.filter((x) => x.key !== a.key) }))} className="px-2 text-xs text-demo">حذف</button>
+              </div>
+              {a.open && (
+                <div className="grid gap-3 p-3 sm:grid-cols-2">
+                  <label><span className={label}>القسم</span>
+                    <select className={input} value={a.section} onChange={(e) => setA(a.key, { section: e.target.value as SectionKey })}>
+                      {SECTION_KEYS.map((k) => <option key={k} value={k}>{SECTIONS[k].name}</option>)}
+                    </select>
+                  </label>
+                  <label><span className={label}>المعرّف (لاتيني، اختياري)</span><input className={input} dir="ltr" value={a.id} onChange={(e) => setA(a.key, { id: e.target.value.toLowerCase() })} placeholder={`${a.section}-${idx + 1}`} /></label>
+                  <label><span className={label}>الكيكر (فوق العنوان)</span><input className={input} value={a.kicker} onChange={(e) => setA(a.key, { kicker: e.target.value })} /></label>
+                  <label><span className={label}>الكاتب</span><input className={input} value={a.author} onChange={(e) => setA(a.key, { author: e.target.value })} /></label>
+                  <label className="sm:col-span-2"><span className={label}>العنوان</span><input className={`${input} font-[family-name:var(--font-display)] text-lg`} value={a.title} onChange={(e) => setA(a.key, { title: e.target.value })} /></label>
+                  <label className="sm:col-span-2"><span className={label}>المقدمة</span><textarea rows={2} className={input} value={a.dek} onChange={(e) => setA(a.key, { dek: e.target.value })} /></label>
+                  <label className="sm:col-span-2"><span className={label}>النص</span><textarea rows={12} className={`${input} font-[family-name:var(--font-body)] leading-8`} value={a.body} onChange={(e) => setA(a.key, { body: e.target.value })} /></label>
+                  <label><span className={label}>المصادر (سطر لكل مصدر: الاسم | الرابط)</span><textarea rows={3} className={input} value={a.sources} onChange={(e) => setA(a.key, { sources: e.target.value })} /></label>
+                  <div className="space-y-3">
+                    <label className="block"><span className={label}>دقائق القراءة</span><input type="number" min={1} className={input} value={a.readingMinutes} onChange={(e) => setA(a.key, { readingMinutes: e.target.value })} /></label>
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={a.isDemo} onChange={(e) => setA(a.key, { isDemo: e.target.checked })} /> مقال تجريبي</label>
+                    {SECTIONS[a.section].live && !a.sources.trim() && !a.isDemo && (
+                      <p className="text-xs text-demo">هذا قسم يعتمد على بيانات حية: أضف مصدرًا موثوقًا أو علّمه تجريبيًا.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  );
+}

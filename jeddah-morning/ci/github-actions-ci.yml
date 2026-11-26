@@ -1,0 +1,31 @@
+# INACTIVE TEMPLATE — not under .github/workflows, so GitHub does not run it.
+# To enable after review: copy to <repo-root>/.github/workflows/jeddah-morning-ci.yml
+# Free: public repos have unlimited minutes; private repos use the free monthly allowance.
+name: jeddah-morning CI
+on:
+  push:
+    paths: ["jeddah-morning/**"]
+  pull_request:
+    paths: ["jeddah-morning/**"]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jeddah-morning
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: jeddah-morning/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

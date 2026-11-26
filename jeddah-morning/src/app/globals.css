@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------
+   JEDDAH MORNING — design tokens
+   Forest green · Ivory · Muted gold
+------------------------------------------------------------------- */
+:root {
+  --paper: #f5efe0;
+  --paper-2: #ece3cc;
+  --paper-3: #e2d6b8;
+  --ink: #18261e;
+  --ink-soft: #3c4a40;
+  --muted: #6b7568;
+  --forest: #1e3a2c;
+  --forest-deep: #12251b;
+  --forest-soft: #2f5541;
+  --gold: #a8854c;
+  --gold-soft: #cbb07a;
+  --rule: #d4c7a7;
+  --on-forest: #f5efe0;
+  --demo: #9a4d1e;
+  color-scheme: light;
+}
+
+.dark {
+  --paper: #0e1913;
+  --paper-2: #14231b;
+  --paper-3: #1b2e23;
+  --ink: #ece4cf;
+  --ink-soft: #cfc6af;
+  --muted: #98a397;
+  --forest: #12251b;
+  --forest-deep: #0a150f;
+  --forest-soft: #3d6a52;
+  --gold: #c9aa72;
+  --gold-soft: #a68c5b;
+  --rule: #2b3d32;
+  --on-forest: #ece4cf;
+  --demo: #e09a62;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-soft: var(--forest-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-rule: var(--rule);
+  --color-on-forest: var(--on-forest);
+  --color-demo: var(--demo);
+
+  --font-display: "Amiri", "Noto Naskh Arabic", serif;
+  --font-body: "Noto Naskh Arabic", "Amiri", serif;
+  --font-ui: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-latin: "Playfair Display", Georgia, serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* Subtle paper grain, pure CSS (no image requests) */
+.paper-grain {
+  background-image:
+    radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--gold) 6%, transparent) 0, transparent 40%),
+    radial-gradient(circle at 80% 90%, color-mix(in srgb, var(--forest-soft) 6%, transparent) 0, transparent 45%);
+}
+
+/* ---------- Editorial typography ---------- */
+.prose-mag {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 2.05;
+  color: var(--ink);
+}
+.prose-mag p + p { margin-top: 1.1em; }
+.prose-mag h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-top: 1.6em;
+  margin-bottom: 0.4em;
+  color: var(--forest-soft);
+}
+.dark .prose-mag h2 { color: var(--gold); }
+
+/* Lead paragraph. (A CSS ::first-letter drop cap is avoided on purpose: it breaks Arabic letter joining.) */
+.dropcap > p:first-of-type {
+  font-size: 1.22em;
+  line-height: 1.95;
+  color: var(--ink);
+}
+.dropcap > p:first-of-type::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-inline-end: 0.4em;
+  background: var(--gold);
+  transform: rotate(45deg) translateY(-0.12em);
+}
+
+.kicker {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+}
+
+.latin-caps {
+  font-family: var(--font-latin);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 0.68rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.rule-double {
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  height: 4px;
+}
+
+.columns-mag { column-gap: 2.5rem; column-rule: 1px solid var(--rule); }
+@media (min-width: 900px) { .columns-mag-2 { columns: 2; } }
+
+/* ---------- Page flip ---------- */
+.flip-stage { perspective: 2200px; }
+.flip-page {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transform-origin: right center; /* spine on the right for Arabic magazines */
+  will-change: transform;
+}
+.flip-shade {
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.25), transparent 30%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-page { transition: none !important; }
+}
+
+/* Safe areas for installed PWA on iPhone */
+.pb-safe { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+
+/* Hide scrollbar in horizontal strips */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
