@@ -7,6 +7,8 @@ export interface Session {
   role: Role;
   /** expiry, epoch seconds */
   exp: number;
+  /** session version: bumping it (password change) logs out every device */
+  v?: number;
 }
 
 export const SESSION_COOKIE = "jm_session";
@@ -32,7 +34,8 @@ export function getAuthConfig(): AuthConfig {
   const reader = env("JM_READER_PASSWORD");
   const admin = env("JM_ADMIN_PASSWORD");
   const secret = env("JM_SESSION_SECRET");
-  const missing = !reader || !admin || !secret;
+  const hashed = !!(process.env.JM_ADMIN_PASSWORD_HASH || process.env.JM_READER_PASSWORD_HASH);
+  const missing = (!hashed && (!reader || !admin)) || !secret;
   if (missing && !isProd()) {
     return {
       readerPassword: reader ?? DEV_DEFAULTS.JM_READER_PASSWORD,
@@ -87,7 +90,7 @@ export async function verifySession(token: string | undefined | null, secret: st
     const data = JSON.parse(new TextDecoder().decode(fromB64url(payload))) as Partial<Session>;
     if ((data.role !== "reader" && data.role !== "admin") || typeof data.exp !== "number") return null;
     if (data.exp <= nowSec) return null;
-    return { role: data.role, exp: data.exp };
+    return { role: data.role, exp: data.exp, v: typeof data.v === "number" ? data.v : 1 };
   } catch {
     return null;
   }

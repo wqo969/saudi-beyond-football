@@ -1,7 +1,7 @@
 import type { Issue } from "../schema";
 
 export interface ContentRepository {
-  readonly kind: "local" | "supabase";
+  readonly kind: "local" | "supabase" | "blob";
   /** Whether this backend accepts writes in the current runtime. */
   readonly writable: boolean;
   listIssues(): Promise<Issue[]>;
@@ -10,6 +10,11 @@ export interface ContentRepository {
   deleteIssue(slug: string): Promise<void>;
   readPdf(file: string): Promise<Uint8Array | null>;
   savePdf(file: string, data: Uint8Array): Promise<void>;
+  readMedia?(file: string): Promise<Uint8Array | null>;
+  saveMedia?(file: string, data: Uint8Array, contentType: string): Promise<void>;
+  listVersions?(slug: string): Promise<string[]>;
+  readVersion?(slug: string, version: string): Promise<import("../schema").Issue | null>;
+  getIssueFresh?(slug: string): Promise<import("../schema").Issue | null>;
 }
 
 export class ReadOnlyError extends Error {

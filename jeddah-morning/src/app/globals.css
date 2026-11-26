@@ -194,3 +194,18 @@ body {
 @media (prefers-reduced-motion: reduce) { .animate-in { animation: none; } }
 @keyframes jm-splash { 0% { opacity: 0; letter-spacing: .5em; } 40% { opacity: 1; } 100% { opacity: 1; letter-spacing: .28em; } }
 .splash-latin { animation: jm-splash 1.2s ease-out both; }
+
+/* ---------- Print edition (PDF) ---------- */
+@page { size: 148mm 210mm; margin: 0; }
+@media print {
+  html, body { background: var(--paper) !important; }
+  button, [data-no-swipe], [data-no-print], .no-print, nav[aria-label="التنقل الرئيسي"], [data-testid="splash"] { display: none !important; }
+  .print-page { break-after: page; break-inside: auto; }
+  .print-full { height: 210mm; overflow: hidden; }
+  .print-full > article { min-height: 210mm; }
+  .prose-mag { font-size: 10.5pt; line-height: 1.9; }
+  a[href^="http"]::after { content: " ↗"; font-size: 0.8em; }
+  .print-only { display: block !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+.print-only { display: none; }

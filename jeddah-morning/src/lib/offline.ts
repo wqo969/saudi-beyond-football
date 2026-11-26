@@ -11,6 +11,7 @@ export function issueOfflineUrls(issue: Issue): string[] {
     ...(issue.surprise ? [`${base}/surprise`] : []),
     ...issue.articles.map((a) => `${base}/a/${a.id}`),
     ...(issue.pdf ? [`${base}/pdf`, `/api/pdf/${issue.slug}`] : []),
+    ...issue.articles.flatMap((a) => a.body.flatMap((b) => (b.type === "image" ? [b.src] : []))),
     "/search",
     "/favorites",
     "/api/search-index",

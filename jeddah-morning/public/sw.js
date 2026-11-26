@@ -5,13 +5,14 @@
  *   jm-pages-v1   pages visited while online (network-first fallback)
  *   jm-issues-v1  issues explicitly saved for offline (written by the page; read here)
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `jm-shell-${VERSION}`;
 const STATIC = `jm-static-${VERSION}`;
 const PAGES = `jm-pages-${VERSION}`;
-const ISSUES = `jm-issues-${VERSION}`;
+const ISSUES = "jm-issues-v1"; // saved issues survive SW upgrades
 const KEEP = [SHELL, STATIC, PAGES, ISSUES];
-const PRECACHE = ["/offline", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"];
+// precache the app shell routes too, so a cold offline start still opens
+const PRECACHE = ["/offline", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png", "/brand/wordmark-light.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -67,6 +68,16 @@ async function networkFirstPage(request) {
   }
 }
 
+/** Images are immutable: serve from the saved-issue cache first, then network (cached into pages cache). */
+async function cacheFirstPrivate(request) {
+  const url = new URL(request.url);
+  const hit = (await (await caches.open(ISSUES)).match(url.pathname)) || (await (await caches.open(PAGES)).match(url.pathname));
+  if (hit) return hit;
+  const res = await fetch(request);
+  if (res.ok && !res.redirected) (await caches.open(PAGES)).put(url.pathname, res.clone());
+  return res;
+}
+
 async function networkFirstData(request) {
   const url = new URL(request.url);
   try {
@@ -94,6 +105,10 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirstPage(request));
+    return;
+  }
+  if (url.pathname.startsWith("/api/media/")) {
+    event.respondWith(cacheFirstPrivate(request));
     return;
   }
   if (url.pathname.startsWith("/api/search-index") || url.pathname.startsWith("/api/pdf/")) {

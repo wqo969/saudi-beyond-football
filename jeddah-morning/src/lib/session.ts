@@ -5,7 +5,12 @@ import { getAuthConfig, SESSION_COOKIE, verifySession, type Session } from "./au
 
 export async function getSession(): Promise<Session | null> {
   const store = await cookies();
-  return verifySession(store.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
+  const s = await verifySession(store.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
+  if (!s) return null;
+  // Revocation: a password change bumps the version and invalidates every older session.
+  const { readAuthDoc } = await import("./auth-store");
+  const doc = await readAuthDoc();
+  return (s.v ?? 1) === doc.sessionVersion ? s : null;
 }
 
 /** Defense in depth: proxy already gates routes, but server code re-checks before mutating. */

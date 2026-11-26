@@ -1,7 +1,8 @@
 import { toArabicDigits } from "@/lib/dates";
 import type { Block } from "@/lib/schema";
 import { SECTIONS } from "@/lib/sections";
-import { ArticleBody, BlockView, Sources } from "../ArticleBody";
+import { ArticleBody, BlockView, EditorialImage, Sources } from "../ArticleBody";
+import { heroImage } from "@/lib/engine/planner";
 import { Art, SectionArt } from "../SectionArt";
 import { Byline, Dek, Folio, Kicker, RunningHead, type ArticlePageProps } from "./parts";
 
@@ -24,9 +25,11 @@ const H = ({ p, className }: { p: ArticlePageProps; className: string }) => (
 
 // 4. Two columns — art position varies (top / inset / none)
 export function TwoColumn(p: ArticlePageProps) {
+  const img = heroImage(p.article);
   return (
     <Shell p={p} className="bg-paper text-ink">
-      {p.variant === 0 && <SectionArt section={p.article.section} seed={p.article.id} palette={p.plan.palette} variant="thumb" className="h-48 md:h-64" />}
+      {img && <EditorialImage b={img} className="!my-0" />}
+      {!img && p.variant === 0 && <SectionArt section={p.article.section} seed={p.article.id} palette={p.plan.palette} variant="thumb" className="h-48 md:h-64" />}
       <div className="px-6 pt-6">
         <Kicker article={p.article} />
         <H p={p} className="mt-1 text-3xl leading-[1.5] md:text-4xl" />
@@ -34,7 +37,7 @@ export function TwoColumn(p: ArticlePageProps) {
         <Byline issue={p.issue} article={p.article} />
         {p.variant === 1 && <SectionArt section={p.article.section} seed={p.article.id} palette={p.plan.palette} variant="thumb" className="float-left my-4 me-0 ms-4 aspect-square w-2/5" />}
         <div className="cols-2 mt-5">
-          <ArticleBody article={p.article} lead={p.variant !== 2} />
+          <ArticleBody article={p.article} lead={p.variant !== 2} omit={img ? ["image"] : []} />
         </div>
       </div>
     </Shell>
@@ -95,14 +98,21 @@ export function PhotoStory(p: ArticlePageProps) {
 
 // 7. Double-page spread: part 0 = full art + giant title, part 1 = text
 export function Spread(p: ArticlePageProps) {
+  const img = heroImage(p.article);
   if ((p.part ?? 0) === 0)
     return (
       <article className="relative isolate flex min-h-full flex-col justify-end bg-deep px-6 pb-10 text-on-deep" aria-labelledby={`h-${p.article.id}-0`}>
-        <SectionArt section={p.article.section} seed={p.article.id + "spread"} palette={p.plan.palette} className="absolute inset-0 -z-10" />
+        {img ? (
+          // eslint-disable-next-line @next/next/no-img-element -- private media route
+          <img src={img.src} alt={img.alt} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        ) : (
+          <SectionArt section={p.article.section} seed={p.article.id + "spread"} palette={p.plan.palette} className="absolute inset-0 -z-10" />
+        )}
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
         <Kicker article={p.article} className="!text-accent-light [&_*]:!text-accent-light" />
         <h2 id={`h-${p.article.id}-0`} className={`${title} mt-2 text-5xl leading-[1.3] md:text-7xl`}>{p.article.title}</h2>
         <Dek article={p.article} />
+        {img && <p className="mt-3 text-[0.6rem] opacity-70">الصورة: {img.credit} · {img.license}</p>}
         <p className="mt-6 text-xs opacity-70">← تابع في الصفحة التالية</p>
         <Folio pageNo={p.pageNo} total={p.total} light />
       </article>
@@ -112,7 +122,7 @@ export function Spread(p: ArticlePageProps) {
       <div className="px-6 pt-6">
         <p className={`${title} text-xl text-accent`}>{p.article.title}</p>
         <Byline issue={p.issue} article={p.article} />
-        <div className="cols-2 mt-5"><ArticleBody article={p.article} /></div>
+        <div className="cols-2 mt-5"><ArticleBody article={p.article} omit={img ? ["image"] : []} /></div>
       </div>
     </Shell>
   );

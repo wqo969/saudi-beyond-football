@@ -86,6 +86,26 @@ export class LocalRepository implements ContentRepository {
     return null;
   }
 
+  async readMedia(file: string): Promise<Uint8Array | null> {
+    if (!/^[a-z0-9-]+\.(jpe?g|png|webp|avif)$/i.test(file)) return null;
+    for (const dir of [path.join(this.uploadDir, "..", "media"), path.join(this.issuesDir, "..", "media")]) {
+      try {
+        return new Uint8Array(await fs.readFile(path.join(dir, file)));
+      } catch {
+        /* next */
+      }
+    }
+    return null;
+  }
+
+  async saveMedia(file: string, data: Uint8Array): Promise<void> {
+    if (!this.writable) throw new ReadOnlyError();
+    if (!/^[a-z0-9-]+\.(jpe?g|png|webp|avif)$/i.test(file)) throw new Error("اسم ملف غير صالح");
+    const dir = path.join(this.uploadDir, "..", "media");
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(path.join(dir, file), data);
+  }
+
   async savePdf(file: string, data: Uint8Array): Promise<void> {
     if (!this.writable) throw new ReadOnlyError();
     if (!PDF_FILE_RE.test(file)) throw new Error("اسم ملف غير صالح");

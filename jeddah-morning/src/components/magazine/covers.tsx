@@ -1,5 +1,5 @@
 import { editionName, formatArabicDate, formatHijriDate, toArabicDigits } from "@/lib/dates";
-import { articleById } from "@/lib/engine/planner";
+import { articleById, heroImage } from "@/lib/engine/planner";
 import { SECTIONS } from "@/lib/sections";
 import { DemoBadge } from "../DemoBadge";
 import { Art, SectionArt } from "../SectionArt";
@@ -60,9 +60,15 @@ function Headline({ issue, className = "" }: { issue: PageProps["issue"]; classN
 
 export function CoverFull(p: PageProps) {
   const section = coverSection(p);
+  const img = heroImage(articleById(p.issue, p.issue.coverStory));
   return (
     <article className="relative isolate flex min-h-full flex-col bg-deep px-5 pb-8 pt-6 text-on-deep" aria-label="الغلاف">
-      <SectionArt section={section} seed={p.issue.slug} palette={p.plan.palette} className="absolute inset-0 -z-10" />
+      {img ? (
+        // eslint-disable-next-line @next/next/no-img-element -- private media route
+        <img src={img.src} alt={img.alt} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+      ) : (
+        <SectionArt section={section} seed={p.issue.slug} palette={p.plan.palette} className="absolute inset-0 -z-10" />
+      )}
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/15 to-black/35" />
       <Masthead {...p} />
       <div className="mt-auto pt-16">
@@ -71,6 +77,7 @@ export function CoverFull(p: PageProps) {
           {p.issue.isDemo && <DemoBadge className="border-white/50 bg-black/40 text-white" />}
         </div>
         <Headline issue={p.issue} className="text-4xl leading-[1.35] drop-shadow md:text-6xl" />
+        {img && <p className="mt-3 text-[0.6rem] opacity-70">صورة الغلاف: {img.credit} · {img.license}</p>}
       </div>
     </article>
   );

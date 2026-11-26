@@ -116,6 +116,8 @@ export function BlockView({ b, article, index }: { b: Block; article: Article; i
       );
     case "puzzle":
       return <PuzzleBlock question={b.question} hint={b.hint} answer={b.answer} explanation={b.explanation} />;
+    case "image":
+      return <EditorialImage b={b} />;
     case "link":
       return (
         <p>
@@ -123,4 +125,18 @@ export function BlockView({ b, article, index }: { b: Block; article: Article; i
         </p>
       );
   }
+}
+
+export function EditorialImage({ b, className = "" }: { b: Extract<Block, { type: "image" }>; className?: string }) {
+  return (
+    <figure className={`my-6 break-inside-avoid [column-span:all] ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- private, authenticated media route; next/image optimizer would cache it publicly */}
+      <img src={b.src} alt={b.alt} loading="lazy" decoding="async" className="w-full bg-paper-2 object-cover" />
+      <figcaption className="mt-1 font-[family-name:var(--font-ui)] text-xs text-muted">
+        {b.caption && <span>{b.caption} · </span>}
+        <span>الصورة: {b.credit} · </span>
+        <a href={b.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">{b.license}</a>
+      </figcaption>
+    </figure>
+  );
 }

@@ -56,6 +56,8 @@ export function blockText(b: Block): string {
       return `${b.question} ${b.hint ?? ""}`; // never index answers or explanations
     case "link":
       return b.label;
+    case "image":
+      return `${b.caption ?? ""} ${b.alt}`;
   }
 }
 

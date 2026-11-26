@@ -9,9 +9,13 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
+/** The pipeline authenticates with a key header; its routes re-verify the key themselves. */
+const PIPELINE_PATHS = ["/api/pipeline/", "/print/"];
+
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   if (isPublic(pathname)) return NextResponse.next();
+  if (PIPELINE_PATHS.some((p) => pathname.startsWith(p)) && request.headers.get("x-jm-pipeline-key")) return NextResponse.next();
 
   const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
   const isApi = pathname.startsWith("/api/");

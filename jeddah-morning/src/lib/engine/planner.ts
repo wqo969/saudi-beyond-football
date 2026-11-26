@@ -320,3 +320,8 @@ export function noveltyReport(fp: Fingerprint, history: Fingerprint[]): NoveltyR
 export function articleById(issue: Issue, id: string | undefined): Article | undefined {
   return issue.articles.find((a) => a.id === id);
 }
+
+/** First licensed editorial image of an article, if any (used as hero instead of generated art). */
+export function heroImage(a: Article | undefined) {
+  return a?.body.find((b): b is Extract<Article["body"][number], { type: "image" }> => b.type === "image");
+}

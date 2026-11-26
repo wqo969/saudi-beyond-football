@@ -19,6 +19,7 @@ export function PuzzleBlock({ question, hint, answer, explanation }: { question:
         </button>
       </div>
       {showHint && hint && <p className="mt-3 text-ink-soft">💡 {hint}</p>}
+      <p className="print-only mt-3 border-t border-rule pt-2 text-sm" style={{ transform: "rotate(180deg)" }}>الحل: {answer}{explanation ? ` — ${explanation}` : ""}</p>
       {showAnswer && <p className="mt-3 border-t border-rule pt-3 font-semibold text-gold" aria-live="polite">الحل: {answer}{explanation && <span className="mt-2 block font-normal text-ink">{explanation}</span>}</p>}
     </div>
   );

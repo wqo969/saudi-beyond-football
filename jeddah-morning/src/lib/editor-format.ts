@@ -70,6 +70,10 @@ export function textToBlocks(text: string): Block[] {
         if (lines[i].startsWith("س:")) items.push({ q: lines[i].slice(2).trim(), a: lines[i + 1]?.startsWith("ج:") ? lines[++i].slice(2).trim() : "" });
       }
       blocks.push({ type: "qa", items: items.filter((x) => x.q && x.a) });
+    } else if (first.startsWith("![") && /^!\[[^\]]+\]\((\/api\/media\/[^)\s]+)\)/.test(first)) {
+      // ![alt](/api/media/x.jpg) | credit | license | sourceUrl | caption
+      const m = first.match(/^!\[([^\]]+)\]\(([^)]+)\)\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*(\S+)\s*(?:\|\s*(.+))?$/);
+      if (m) blocks.push({ type: "image", alt: m[1].trim(), src: m[2].trim(), credit: m[3].trim(), license: m[4].trim(), sourceUrl: m[5].trim(), ...(m[6] ? { caption: m[6].trim() } : {}) });
     } else if (lines.every((l) => l.startsWith("صورة:"))) {
       blocks.push({ type: "gallery", items: lines.map((l) => ({ caption: l.slice(5).trim() })) });
     } else if (first.startsWith("لغز:")) {
@@ -113,6 +117,8 @@ export function blocksToText(blocks: Block[]): string {
           return b.items.map((i) => `س: ${i.q}\nج: ${i.a}`).join("\n");
         case "gallery":
           return b.items.map((i) => `صورة: ${i.caption}`).join("\n");
+        case "image":
+          return `![${b.alt}](${b.src}) | ${b.credit} | ${b.license} | ${b.sourceUrl}${b.caption ? ` | ${b.caption}` : ""}`;
         case "link":
           return `[${b.label}](${b.url})`;
       }

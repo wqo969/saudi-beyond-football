@@ -42,6 +42,16 @@ export const BlockSchema = z.discriminatedUnion("type", [
     explanation: z.string().optional(),
   }),
   z.object({ type: z.literal("link"), label: nonEmpty("نص الرابط"), url: z.url("رابط غير صالح") }),
+  /** Editorial image: usage rights are mandatory (credit + license + source). */
+  z.object({
+    type: z.literal("image"),
+    src: z.string().regex(/^\/api\/media\/[a-z0-9-]+\.(jpe?g|png|webp|avif)$/i, "الصورة يجب أن تكون مرفوعة إلى مكتبة الوسائط"),
+    alt: nonEmpty("النص البديل"),
+    caption: z.string().optional(),
+    credit: nonEmpty("صاحب الحقوق"),
+    license: nonEmpty("الترخيص"),
+    sourceUrl: z.url("رابط مصدر الصورة غير صالح"),
+  }),
 ]);
 
 export type Block = z.infer<typeof BlockSchema>;

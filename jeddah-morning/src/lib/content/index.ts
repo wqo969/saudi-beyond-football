@@ -4,14 +4,20 @@ import { planAll, type IssuePlan } from "../engine/planner";
 import { compareIssuesDesc, isVisible } from "../publishing";
 import type { Issue } from "../schema";
 import { getSession } from "../session";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { BlobRepository, type Cached, type Invalidate } from "./blob";
 import { LocalRepository } from "./local";
 import type { ContentRepository } from "./repository";
-import { SupabaseRepository } from "./supabase";
+import { backend, getStore } from "./store";
 
 let repo: ContentRepository | null = null;
 
+const nextCached: Cached = (key, tags, fn) => unstable_cache(fn, key, { tags, revalidate: false })();
+const nextInvalidate: Invalidate = (tags) => tags.forEach((t) => revalidateTag(t, { expire: 0 }));
+
+/** local = files in content/ (dev, demo) · blob = private Vercel Blob (production) · blob-fs = blob code path on disk (tests). */
 export function getRepository(): ContentRepository {
-  if (!repo) repo = process.env.JM_CONTENT_BACKEND === "supabase" ? new SupabaseRepository() : new LocalRepository();
+  if (!repo) repo = backend() === "local" ? new LocalRepository() : new BlobRepository(getStore(), nextCached, nextInvalidate);
   return repo;
 }
 
