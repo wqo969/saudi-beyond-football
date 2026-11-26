@@ -14,6 +14,7 @@ const LINKS = [
   ["/covers", "أرشيف الأغلفة"],
   ["/gifts", "الهدايا الرقمية"],
   ["/next", "العدد القادم"],
+  ["/install", "تثبيت التطبيق على الجوال"],
 ] as const;
 
 export default async function SettingsPage() {

@@ -1,5 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuthConfig, SESSION_COOKIE, verifySession } from "@/lib/auth";
+import { kv } from "@/lib/content/store";
+
+/** Current session version (bumped on password change / "log out everywhere"); cached briefly per instance. */
+let versionCache: { v: number; at: number } | null = null;
+async function sessionVersion(fresh = false): Promise<number> {
+  if (!fresh && versionCache && Date.now() - versionCache.at < 10_000) return versionCache.v;
+  try {
+    const doc = await kv.get<{ sessionVersion: number }>("auth");
+    versionCache = { v: doc?.sessionVersion ?? 1, at: Date.now() };
+  } catch {
+    versionCache = { v: versionCache?.v ?? 1, at: Date.now() };
+  }
+  return versionCache.v;
+}
 
 /** Paths reachable without a session. Everything else (pages, APIs, PDFs) requires login. */
 const PUBLIC_PATHS = ["/login", "/offline", "/manifest.webmanifest", "/sw.js", "/robots.txt", "/favicon.ico"];
@@ -17,7 +31,9 @@ export async function proxy(request: NextRequest) {
   if (isPublic(pathname)) return NextResponse.next();
   if (PIPELINE_PATHS.some((p) => pathname.startsWith(p)) && request.headers.get("x-jm-pipeline-key")) return NextResponse.next();
 
-  const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
+  let session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
+  // Revoked sessions (older version) are rejected; on any mismatch re-read once so fresh logins are never refused by a stale cache.
+  if (session && (session.v ?? 1) !== (await sessionVersion()) && (session.v ?? 1) !== (await sessionVersion(true))) session = null;
   const isApi = pathname.startsWith("/api/");
   const needsAdmin = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 

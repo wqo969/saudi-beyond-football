@@ -33,13 +33,12 @@ export async function roleFor(password: string, cfg: AuthConfig): Promise<Role |
   const doc = await readAuthDoc();
   const adminHash = doc.adminHash ?? process.env.JM_ADMIN_PASSWORD_HASH;
   const readerHash = doc.readerHash ?? process.env.JM_READER_PASSWORD_HASH;
-  if (adminHash || readerHash) {
-    const [a, r] = await Promise.all([verifyPassword(password, adminHash), verifyPassword(password, readerHash)]);
-    if (a) return "admin";
-    if (r) return "reader";
-    return null;
-  }
-  return roleForPassword(password, cfg); // plaintext env fallback: development and automated tests
+  // Each role: its hash when one exists, otherwise the plaintext env value (development and automated tests).
+  const plain = await roleForPassword(password, { ...cfg, adminPassword: adminHash ? null : cfg.adminPassword, readerPassword: readerHash ? null : cfg.readerPassword });
+  const [a, r] = await Promise.all([verifyPassword(password, adminHash), verifyPassword(password, readerHash)]);
+  if (a || plain === "admin") return "admin";
+  if (r || plain === "reader") return "reader";
+  return null;
 }
 
 /** True when the deployment is configured with hashes (production) rather than plaintext. */

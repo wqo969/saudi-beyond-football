@@ -13,9 +13,11 @@ export const test = base.extend({
 });
 export { expect };
 
-export async function login(page: Page, password: "e2e-reader" | "e2e-admin", next = "/") {
+export const PASS = { "e2e-reader": "e2e-reader-pass", "e2e-admin": "e2e-admin-pass-01" } as const;
+
+export async function login(page: Page, who: "e2e-reader" | "e2e-admin", next = "/") {
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
-  await page.fill("input[name=password]", password);
+  await page.fill("input[name=password]", PASS[who]);
   await page.click("button[type=submit]");
   await expect(page).toHaveURL(next === "/" ? /\/(\?.*)?$/ : new RegExp(next.replace(/[?]/g, "\\?")));
 }

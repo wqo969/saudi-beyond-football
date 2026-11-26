@@ -7,7 +7,7 @@ const future = Math.floor(Date.now() / 1000) + 3600;
 describe("session tokens", () => {
   it("round-trips a valid session", async () => {
     const t = await signSession({ role: "admin", exp: future }, secret);
-    expect(await verifySession(t, secret)).toEqual({ role: "admin", exp: future });
+    expect(await verifySession(t, secret)).toEqual({ role: "admin", exp: future, v: 1 });
   });
   it("rejects wrong secret, tampering, expiry and garbage", async () => {
     const t = await signSession({ role: "reader", exp: future }, secret);

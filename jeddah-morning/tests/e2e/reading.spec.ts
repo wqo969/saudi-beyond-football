@@ -71,10 +71,10 @@ test("reader settings: vertical mode, no-effect, text size, go-to page, focus mo
 
 test("puzzle reveals answer and explanation only on request", async ({ page }) => {
   await page.goto("/issue/2026-11-26-morning/a/puzzle-1");
-  await expect(page.getByText("الحل: الحفرة")).toHaveCount(0);
+  await expect(page.getByText(/الحل: الحفرة/).filter({ visible: true })).toHaveCount(0);
   await page.getByRole("button", { name: "اكشف الحل" }).click();
-  await expect(page.getByText(/الحل: الحفرة/)).toBeVisible();
-  await expect(page.getByText("كل ما تزيله من ترابها يزيد حجمها.")).toBeVisible();
+  await expect(page.getByText(/الحل: الحفرة/).filter({ visible: true })).toBeVisible();
+  await expect(page.getByText("كل ما تزيله من ترابها يزيد حجمها.", { exact: true })).toBeVisible();
 });
 
 test("brief edition, surprise and rating work from the same source", async ({ page }) => {

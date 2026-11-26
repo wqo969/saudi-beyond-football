@@ -1,5 +1,5 @@
 import "server-only";
-import webpush from "web-push";
+import { sendNotification, setVapidDetails } from "web-push";
 import { kv } from "./content/store";
 import { logOp } from "./ops-log";
 
@@ -21,7 +21,7 @@ export function pushConfigured(): boolean {
 }
 
 function setup() {
-  webpush.setVapidDetails(process.env.JM_VAPID_SUBJECT || "https://example.invalid", process.env.NEXT_PUBLIC_JM_VAPID_PUBLIC_KEY!, process.env.JM_VAPID_PRIVATE_KEY!);
+  setVapidDetails(process.env.JM_VAPID_SUBJECT || "https://example.invalid", process.env.NEXT_PUBLIC_JM_VAPID_PUBLIC_KEY!, process.env.JM_VAPID_PRIVATE_KEY!);
 }
 
 export const readSubs = async () => (await kv.get<StoredSubscription[]>("push-subscriptions")) ?? [];
@@ -46,7 +46,7 @@ export async function sendToAll(payload: PushPayload): Promise<{ sent: number; f
   await Promise.all(
     subs.map(async (s) => {
       try {
-        await webpush.sendNotification(s, JSON.stringify(payload), { TTL: 6 * 3600, urgency: "normal" });
+        await sendNotification(s, JSON.stringify(payload), { TTL: 6 * 3600, urgency: "normal" });
         sent++;
       } catch (e) {
         failed++;

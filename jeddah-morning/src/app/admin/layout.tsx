@@ -20,11 +20,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin" className="hover:text-gold">الأعداد</Link>
             <Link href="/admin/issues/new" className="hover:text-gold">عدد جديد</Link>
             <Link href="/admin/import" className="hover:text-gold">الاستيراد</Link>
+            <Link href="/admin/sources" className="hover:text-gold">المصادر</Link>
+            <Link href="/admin/media" className="hover:text-gold">الوسائط</Link>
+            <Link href="/admin/operations" className="hover:text-gold">العمليات</Link>
+            <Link href="/admin/security" className="hover:text-gold">الأمان</Link>
             <Link href="/" className="text-gold">← المجلة</Link>
           </nav>
         </div>
         <div className="bg-black/20 py-1 text-center text-[0.7rem] text-on-forest/70">
-          مصدر المحتوى: {repo.kind === "local" ? "ملفات محلية" : "Supabase"} · {repo.writable ? "الكتابة متاحة" : "للقراءة فقط في هذه البيئة"}
+          مصدر المحتوى: {repo.kind === "local" ? "ملفات محلية" : "تخزين سحابي خاص"} · {repo.writable ? "الكتابة متاحة" : "للقراءة فقط في هذه البيئة"}
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>

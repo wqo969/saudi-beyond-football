@@ -128,3 +128,9 @@ export async function deleteIssueAction(slug: string): Promise<SaveResult> {
   refresh();
   return { ok: true };
 }
+
+export async function importMarkdownAction(md: string, overwrite: boolean): Promise<SaveResult> {
+  await requireAdmin();
+  const { markdownToIssue } = await import("@/lib/markdown-import");
+  return importIssueJsonAction(JSON.stringify(markdownToIssue(md)), overwrite);
+}

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { importIssueJsonAction, type SaveResult } from "@/app/admin/actions";
+import { importIssueJsonAction, importMarkdownAction, type SaveResult } from "@/app/admin/actions";
 import { riyadhDateKey } from "@/lib/dates";
 
 export function ImportPanel() {
@@ -17,7 +17,8 @@ export function ImportPanel() {
   }
 
   function importJson() {
-    start(async () => setJsonResult(await importIssueJsonAction(json, overwrite)));
+    const looksMarkdown = !json.trim().startsWith("{");
+    start(async () => setJsonResult(looksMarkdown ? await importMarkdownAction(json, overwrite) : await importIssueJsonAction(json, overwrite)));
   }
 
   async function uploadPdf(e: React.FormEvent<HTMLFormElement>) {
@@ -37,11 +38,11 @@ export function ImportPanel() {
   return (
     <div className="mt-6 grid gap-8 lg:grid-cols-2">
       <section className="border border-rule p-4">
-        <h2 className="font-[family-name:var(--font-display)] text-xl font-bold">محتوى منظم (JSON)</h2>
+        <h2 className="font-[family-name:var(--font-display)] text-xl font-bold">محتوى منظم (JSON أو Markdown)</h2>
         <p className="mt-1 text-xs leading-6 text-muted">
           الصيغة موثقة في <code dir="ltr">content/templates/issue.template.json</code>. يُتحقق من الملف كاملًا قبل الحفظ.
         </p>
-        <input type="file" accept="application/json,.json" onChange={(e) => onJsonFile(e.target.files?.[0])} className="mt-3 block text-sm" data-testid="json-file" />
+        <input type="file" accept="application/json,.json,.md,text/markdown" onChange={(e) => onJsonFile(e.target.files?.[0])} className="mt-3 block text-sm" data-testid="json-file" />
         <textarea value={json} onChange={(e) => setJson(e.target.value)} rows={12} dir="ltr" className={`${input} mt-3 font-mono text-xs`} placeholder='{ "slug": "2026-11-27-morning", ... }' data-testid="json-text" />
         <label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} /> استبدال العدد إن وُجد</label>
         <button type="button" onClick={importJson} disabled={pending || !json.trim()} className="mt-3 rounded-full bg-forest px-5 py-2 text-sm text-on-forest disabled:opacity-50" data-testid="import-json">

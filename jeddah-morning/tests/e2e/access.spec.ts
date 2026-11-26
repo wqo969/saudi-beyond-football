@@ -30,7 +30,7 @@ test.describe("privacy & access control", () => {
 
   test("open redirect via ?next is blocked", async ({ page }) => {
     await page.goto("/login?next=//evil.example");
-    await page.fill("input[name=password]", "e2e-reader");
+    await page.fill("input[name=password]", "e2e-reader-pass");
     await page.click("button[type=submit]");
     await expect(page).toHaveURL(/localhost:\d+\/$/);
   });
