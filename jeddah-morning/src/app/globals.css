@@ -199,7 +199,8 @@ body {
 @page { size: 148mm 210mm; margin: 0; }
 @media print {
   html, body { background: var(--paper) !important; }
-  button, [data-no-swipe], [data-no-print], .no-print, nav[aria-label="التنقل الرئيسي"], [data-testid="splash"] { display: none !important; }
+  button, [data-no-print], .no-print, nav[aria-label="التنقل الرئيسي"], [data-testid="splash"] { display: none !important; }
+  .mag-folio { display: none !important; } /* the PDF footer prints real page numbers */
   .print-page { break-after: page; break-inside: auto; }
   .print-full { height: 210mm; overflow: hidden; }
   .print-full > article { min-height: 210mm; }

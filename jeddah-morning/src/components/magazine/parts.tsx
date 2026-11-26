@@ -31,7 +31,7 @@ export function RunningHead({ issue, plan, article, light = false }: { issue: Is
 
 export function Folio({ pageNo, total, light = false }: { pageNo: number; total: number; light?: boolean }) {
   return (
-    <p className={`py-5 text-center font-[family-name:var(--font-latin)] text-xs ${light ? "text-white/70" : "text-muted"}`} aria-label={`صفحة ${pageNo + 1} من ${total}`}>
+    <p className={`mag-folio py-5 text-center font-[family-name:var(--font-latin)] text-xs ${light ? "text-white/70" : "text-muted"}`} aria-label={`صفحة ${pageNo + 1} من ${total}`}>
       — {toArabicDigits(pageNo + 1)} —
     </p>
   );
@@ -54,7 +54,7 @@ export function Byline({ issue, article, light = false }: { issue: Issue; articl
       {article.author && <span>{article.author}</span>}
       {article.readingMinutes && <span>· {toArabicDigits(article.readingMinutes)} د</span>}
       {demo && <DemoBadge />}
-      <span className="ms-auto flex items-center gap-1" data-no-swipe>
+      <span className="ms-auto flex items-center gap-1" data-no-swipe data-no-print>
         <ArticleTools issue={issue} article={article} />
         <FavoriteButton issueSlug={issue.slug} articleId={article.id} title={article.title} section={article.section} compact />
       </span>
