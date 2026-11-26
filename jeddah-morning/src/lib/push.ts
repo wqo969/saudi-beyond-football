@@ -1,5 +1,6 @@
 import "server-only";
 import { sendNotification, setVapidDetails } from "web-push";
+import { vapidKeys } from "./server-secrets";
 import { kv } from "./content/store";
 import { logOp } from "./ops-log";
 
@@ -16,12 +17,13 @@ export interface PushPayload {
   tag?: string;
 }
 
-export function pushConfigured(): boolean {
-  return !!(process.env.NEXT_PUBLIC_JM_VAPID_PUBLIC_KEY && process.env.JM_VAPID_PRIVATE_KEY);
+export async function pushConfigured(): Promise<boolean> {
+  return !!(await vapidKeys());
 }
 
-function setup() {
-  setVapidDetails(process.env.JM_VAPID_SUBJECT || "https://example.invalid", process.env.NEXT_PUBLIC_JM_VAPID_PUBLIC_KEY!, process.env.JM_VAPID_PRIVATE_KEY!);
+async function setup() {
+  const k = (await vapidKeys())!;
+  setVapidDetails(process.env.JM_VAPID_SUBJECT || "https://jeddah-morning.invalid", k.publicKey, k.privateKey);
 }
 
 export const readSubs = async () => (await kv.get<StoredSubscription[]>("push-subscriptions")) ?? [];
@@ -37,8 +39,8 @@ export async function removeSub(endpoint: string) {
 
 /** Sends to every subscribed device; expired subscriptions are pruned. */
 export async function sendToAll(payload: PushPayload): Promise<{ sent: number; failed: number }> {
-  if (!pushConfigured()) return { sent: 0, failed: 0 };
-  setup();
+  if (!(await pushConfigured())) return { sent: 0, failed: 0 };
+  await setup();
   const subs = await readSubs();
   let sent = 0;
   let failed = 0;

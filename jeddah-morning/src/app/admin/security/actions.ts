@@ -4,6 +4,7 @@ import { getAuthConfig, SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/l
 import { readAuthDoc, roleFor, writeAuthDoc } from "@/lib/auth-store";
 import { logOp } from "@/lib/ops-log";
 import { hashPassword, passwordProblems } from "@/lib/passwords";
+import { sessionSecret } from "@/lib/server-secrets";
 import { requireAdmin } from "@/lib/session";
 
 export interface SecurityState {
@@ -34,7 +35,7 @@ export async function changePasswordsAction(_prev: SecurityState, form: FormData
   await writeAuthDoc(next);
   await logOp("security", "تغيير كلمات المرور وإنهاء الجلسات الأخرى", "success");
   // keep the current admin signed in with the new session version
-  const token = await signSession({ role: "admin", exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE, v: next.sessionVersion }, cfg.secret!);
+  const token = await signSession({ role: "admin", exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE, v: next.sessionVersion }, await sessionSecret());
   (await cookies()).set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" && process.env.JM_INSECURE_COOKIES !== "true", path: "/", maxAge: SESSION_MAX_AGE });
   return { ok: true };
 }
@@ -45,4 +46,12 @@ export async function logoutEverywhereAction(): Promise<SecurityState> {
   await writeAuthDoc({ ...doc, sessionVersion: doc.sessionVersion + 1 });
   await logOp("security", "إنهاء كل الجلسات", "success");
   return { ok: true };
+}
+
+/** Shown only to the signed-in editor, on demand, to store it as a network secret for the daily pipeline. */
+export async function revealPipelineKeyAction(): Promise<string> {
+  await requireAdmin();
+  await logOp("security", "عرض مفتاح خط الإنتاج للمحرر", "success");
+  const { pipelineKey } = await import("@/lib/server-secrets");
+  return pipelineKey();
 }

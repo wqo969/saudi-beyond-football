@@ -2,7 +2,8 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthConfig, safeNext, SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/lib/auth";
-import { clearFailures, hasHashedPasswords, lockedUntil, productionAuthProblems, readAuthDoc, recordFailure, roleFor } from "@/lib/auth-store";
+import { clearFailures, lockedUntil, passwordsConfigured, productionAuthProblems, readAuthDoc, recordFailure, roleFor } from "@/lib/auth-store";
+import { sessionSecret } from "@/lib/server-secrets";
 
 export interface LoginState {
   error?: string;
@@ -10,8 +11,8 @@ export interface LoginState {
 
 export async function loginAction(_prev: LoginState, form: FormData): Promise<LoginState> {
   const cfg = getAuthConfig();
-  if (!cfg.secret || (!hasHashedPasswords() && (!cfg.readerPassword || !cfg.adminPassword)) || productionAuthProblems().length) {
-    return { error: "إعدادات الدخول على الخادم غير مكتملة أو غير آمنة." };
+  if (!(await passwordsConfigured()) || productionAuthProblems().length) {
+    return { error: "لم يُجهَّز الدخول بعد. افتح صفحة الإعداد الأولي /setup." };
   }
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "local";
@@ -26,7 +27,7 @@ export async function loginAction(_prev: LoginState, form: FormData): Promise<Lo
   }
   await clearFailures(ip);
   const { sessionVersion } = await readAuthDoc();
-  const token = await signSession({ role, exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE, v: sessionVersion }, cfg.secret);
+  const token = await signSession({ role, exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE, v: sessionVersion }, await sessionSecret());
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",

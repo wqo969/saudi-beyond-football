@@ -17,7 +17,7 @@ export default async function PrintPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const session = await getSession();
   const h = await headers();
-  if (session?.role !== "admin" && !pipelineKeyValid(h.get("x-jm-pipeline-key"))) notFound();
+  if (session?.role !== "admin" && !(await pipelineKeyValid(h.get("x-jm-pipeline-key")))) notFound();
   const issue = await getRepository().getIssue(slug);
   const plan = await getPlan(slug);
   if (!issue || !plan) notFound();

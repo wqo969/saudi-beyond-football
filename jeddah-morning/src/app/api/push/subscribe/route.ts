@@ -5,7 +5,7 @@ import { getSession } from "@/lib/session";
 
 export async function POST(req: Request) {
   if (!(await getSession())) return NextResponse.json({ ok: false }, { status: 401 });
-  if (!pushStatus().enabled) return NextResponse.json({ ok: false, reason: "disabled" }, { status: 503 });
+  if (!(await pushStatus()).enabled) return NextResponse.json({ ok: false, reason: "disabled" }, { status: 503 });
   const body = await req.json().catch(() => null);
   if (!isValidSubscription(body)) return NextResponse.json({ ok: false, reason: "invalid-subscription" }, { status: 400 });
   await addSub({ endpoint: body.endpoint, keys: body.keys });
@@ -20,6 +20,6 @@ export async function DELETE(req: Request) {
 }
 
 export async function GET() {
-  const s = pushStatus();
+  const s = await pushStatus();
   return NextResponse.json({ enabled: s.enabled, publicKey: s.publicKey ?? null });
 }

@@ -7,7 +7,7 @@ import { formatIssues, IssueSchema } from "@/lib/schema";
 
 /** Create or replace an issue (validated). Imported issues default to draft unless they say otherwise. */
 export async function POST(req: Request) {
-  if (!pipelineAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!(await pipelineAuthorized(req))) return NextResponse.json({ ok: false }, { status: 401 });
   const body = await req.json().catch(() => null);
   if (body && typeof body === "object" && !("status" in body)) (body as Record<string, unknown>).status = "draft";
   const r = IssueSchema.safeParse(body);

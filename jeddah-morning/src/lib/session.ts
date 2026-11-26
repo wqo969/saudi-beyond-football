@@ -1,11 +1,12 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAuthConfig, SESSION_COOKIE, verifySession, type Session } from "./auth";
+import { SESSION_COOKIE, verifySession, type Session } from "./auth";
+import { sessionSecret } from "./server-secrets";
 
 export async function getSession(): Promise<Session | null> {
   const store = await cookies();
-  const s = await verifySession(store.get(SESSION_COOKIE)?.value, getAuthConfig().secret);
+  const s = await verifySession(store.get(SESSION_COOKIE)?.value, await sessionSecret());
   if (!s) return null;
   // Revocation: a password change bumps the version and invalidates every older session.
   const { readAuthDoc } = await import("./auth-store");

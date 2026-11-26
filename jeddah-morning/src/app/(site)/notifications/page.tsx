@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "الإشعارات" };
 
 export default async function NotificationsPage() {
   const issues = (await listVisibleIssues()).slice(0, 20).map((i) => ({ slug: i.slug, title: i.title, at: i.publishAt ?? `${i.date}T07:30:00+03:00`, edition: i.edition, surprise: !!i.surprise }));
-  const push = pushStatus();
+  const push = await pushStatus();
   return (
     <div className="px-4 pt-6 md:max-w-2xl">
       <h1 className="font-[family-name:var(--font-display)] text-4xl font-bold">الإشعارات</h1>

@@ -7,7 +7,7 @@ const TYPES: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", p
 
 /** Upload a licensed editorial image (rights are recorded on the image block itself). */
 export async function POST(req: Request) {
-  if (!pipelineAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!(await pipelineAuthorized(req))) return NextResponse.json({ ok: false }, { status: 401 });
   const name = new URL(req.url).searchParams.get("name") ?? "";
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   if (!/^[a-z0-9-]+\.(jpe?g|png|webp|avif)$/i.test(name) || !TYPES[ext]) return NextResponse.json({ ok: false, errors: ["name"] }, { status: 400 });

@@ -5,10 +5,10 @@ export interface PushSubscriptionRecord {
   keys: { p256dh: string; auth: string };
 }
 
-export function pushStatus(): { enabled: boolean; reason?: string; publicKey?: string } {
-  const publicKey = process.env.NEXT_PUBLIC_JM_VAPID_PUBLIC_KEY;
-  if (!publicKey || !process.env.JM_VAPID_PRIVATE_KEY) return { enabled: false, reason: "missing-vapid-keys" };
-  return { enabled: true, publicKey };
+export async function pushStatus(): Promise<{ enabled: boolean; reason?: string; publicKey?: string }> {
+  const { vapidKeys } = await import("./server-secrets");
+  const k = await vapidKeys();
+  return k ? { enabled: true, publicKey: k.publicKey } : { enabled: false, reason: "disabled" };
 }
 
 export function isValidSubscription(x: unknown): x is PushSubscriptionRecord {

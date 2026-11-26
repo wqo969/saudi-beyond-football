@@ -22,13 +22,11 @@ describe("password hashing (PBKDF2-SHA256)", () => {
 
 describe("pipeline key", () => {
   afterEach(() => delete process.env.JM_PIPELINE_KEY);
-  it("requires a configured key of ≥32 chars and an exact match", () => {
-    expect(pipelineKeyValid("anything")).toBe(false);
-    process.env.JM_PIPELINE_KEY = "short";
-    expect(pipelineKeyValid("short")).toBe(false);
+  it("requires an exact match with the configured key", async () => {
     process.env.JM_PIPELINE_KEY = "k".repeat(40);
-    expect(pipelineKeyValid("k".repeat(40))).toBe(true);
-    expect(pipelineKeyValid("k".repeat(39) + "x")).toBe(false);
-    expect(pipelineKeyValid(null)).toBe(false);
+    expect(await pipelineKeyValid("k".repeat(40))).toBe(true);
+    expect(await pipelineKeyValid("k".repeat(39) + "x")).toBe(false);
+    expect(await pipelineKeyValid("")).toBe(false);
+    expect(await pipelineKeyValid(null)).toBe(false);
   });
 });

@@ -7,7 +7,7 @@ import { SLUG_RE } from "@/lib/schema";
 
 /** Upload the PDF edition and attach it to the issue. */
 export async function POST(req: Request) {
-  if (!pipelineAuthorized(req)) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!(await pipelineAuthorized(req))) return NextResponse.json({ ok: false }, { status: 401 });
   const slug = new URL(req.url).searchParams.get("slug") ?? "";
   if (!SLUG_RE.test(slug)) return NextResponse.json({ ok: false, errors: ["slug"] }, { status: 400 });
   const bytes = new Uint8Array(await req.arrayBuffer());

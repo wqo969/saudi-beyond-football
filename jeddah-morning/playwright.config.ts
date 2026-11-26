@@ -15,6 +15,8 @@ if (!process.env.JM_E2E_DATA_ROOT) {
   process.env.JM_E2E_DATA_ROOT = dataRoot; // reused by worker processes
 }
 const PORT = 3210;
+const SETUP_PORT = 3211;
+const setupRoot = mkdtempSync(path.join(tmpdir(), "jm-e2e-setup-"));
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -23,8 +25,12 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: { baseURL: `http://localhost:${PORT}`, trace: "off", locale: "ar-SA", timezoneId: "Asia/Riyadh" },
-  projects: [{ name: "iphone", use: { ...devices["iPhone 13"], browserName: "chromium" } }],
-  webServer: {
+  projects: [
+    { name: "iphone", testIgnore: /setup\.spec\.ts/, use: { ...devices["iPhone 13"], browserName: "chromium" } },
+    // First launch of a production deployment: no passwords configured, only the owner's setup code.
+    { name: "first-run", testMatch: /setup\.spec\.ts/, use: { ...devices["iPhone 13"], browserName: "chromium", baseURL: `http://localhost:${SETUP_PORT}` } },
+  ],
+  webServer: [{
     command: `npx next start -p ${PORT}`,
     port: PORT,
     reuseExistingServer: false,
@@ -39,4 +45,11 @@ export default defineConfig({
       JM_INSECURE_COOKIES: "true",
     },
   },
+  {
+    command: `npx next start -p ${SETUP_PORT}`,
+    port: SETUP_PORT,
+    reuseExistingServer: false,
+    timeout: 60_000,
+    env: { JM_DATA_ROOT: setupRoot, JM_CONTENT_BACKEND: "blob-fs", JM_SETUP_CODE: "owner-chosen-setup-code-2026", JM_INSECURE_COOKIES: "true" },
+  }],
 });

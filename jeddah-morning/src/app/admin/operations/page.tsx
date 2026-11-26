@@ -15,14 +15,14 @@ const LIMITS = [
 ] as const;
 
 export default async function OperationsPage() {
-  const [ops, auto, issues, subs] = await Promise.all([readOps(), readAutomation(), listAllIssues(), readSubs()]);
+  const [ops, auto, issues, subs, pushOn] = await Promise.all([readOps(), readAutomation(), listAllIssues(), readSubs(), pushConfigured()]);
   const count = (area: string, outcome?: string) => ops.filter((o) => o.area === area && (!outcome || o.outcome === outcome)).length;
   const pdfs = issues.filter((i) => i.pdf).length;
   return (
     <div className="space-y-10">
       <section>
         <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">العمليات والأتمتة</h1>
-        <p className="text-sm text-muted">التخزين: {backend() === "blob" ? "Vercel Blob خاص" : backend() === "blob-fs" ? "تخزين محلي (اختبار)" : "ملفات محلية"} · الإشعارات: {pushConfigured() ? `مفعّلة (${toArabicDigits(subs.length)} جهاز)` : "غير مهيأة"}</p>
+        <p className="text-sm text-muted">التخزين: {backend() === "blob" ? "Vercel Blob خاص" : backend() === "blob-fs" ? "تخزين محلي (اختبار)" : "ملفات محلية"} · الإشعارات: {pushOn ? `مفعّلة (${toArabicDigits(subs.length)} جهاز)` : "غير مهيأة"}</p>
         <AutomationToggle enabled={auto.enabled} />
       </section>
 

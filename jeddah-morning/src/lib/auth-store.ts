@@ -41,6 +41,14 @@ export async function roleFor(password: string, cfg: AuthConfig): Promise<Role |
   return null;
 }
 
+/** Can anyone log in at all? (hashes from setup/env, or plaintext env, or dev defaults) */
+export async function passwordsConfigured(): Promise<boolean> {
+  const doc = await readAuthDoc();
+  if (doc.adminHash || process.env.JM_ADMIN_PASSWORD_HASH) return true;
+  const cfg = (await import("./auth")).getAuthConfig();
+  return !!(cfg.adminPassword && cfg.readerPassword);
+}
+
 /** True when the deployment is configured with hashes (production) rather than plaintext. */
 export const hasHashedPasswords = () => !!(process.env.JM_ADMIN_PASSWORD_HASH || process.env.JM_READER_PASSWORD_HASH);
 
