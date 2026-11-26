@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers";
 import { login } from "./helpers";
 
 test.describe("privacy & access control", () => {
@@ -46,7 +46,7 @@ test.describe("privacy & access control", () => {
 
   test("drafts are hidden from readers", async ({ page }) => {
     await login(page, "e2e-reader");
-    const res = await page.goto("/issue/2026-11-27-morning");
+    const res = await page.goto("/issue/2026-11-29-morning");
     expect(res?.status()).toBe(404);
   });
 

@@ -10,7 +10,7 @@ afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 const issue = IssueSchema.parse({
   slug: "2026-12-01-evening", date: "2026-12-01", edition: "evening", number: 7, title: "t", coverHeadline: "c",
-  articles: [{ id: "a", section: "song", title: "x", body: [{ type: "p", text: "y" }] }],
+  articles: [{ id: "a", section: "discovery", title: "x", body: [{ type: "p", text: "y" }] }],
 });
 
 describe("LocalRepository", () => {

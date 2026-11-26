@@ -3,7 +3,7 @@ import { IssueSchema } from "@/lib/schema";
 
 const base = {
   slug: "2026-12-01-morning", date: "2026-12-01", edition: "morning", number: 1, title: "t", coverHeadline: "c",
-  articles: [{ id: "a-1", section: "fashion", title: "x", body: [{ type: "p", text: "y" }] }],
+  articles: [{ id: "a-1", section: "personal-growth", title: "x", body: [{ type: "p", text: "y" }] }],
 };
 
 describe("IssueSchema", () => {
@@ -32,6 +32,16 @@ describe("IssueSchema", () => {
   it("requires articles or a pdf", () => {
     expect(IssueSchema.safeParse({ ...base, articles: [] }).success).toBe(false);
     expect(IssueSchema.safeParse({ ...base, articles: [], pdf: { file: "x.pdf" } }).success).toBe(true);
+  });
+  it("requires the special key for special editions and validates cover stories", () => {
+    expect(IssueSchema.safeParse({ ...base, slug: "2026-12-01-special-winter", edition: "special" }).success).toBe(false);
+    expect(IssueSchema.safeParse({ ...base, slug: "2026-12-01-special-winter", edition: "special", special: "winter" }).success).toBe(true);
+    expect(IssueSchema.safeParse({ ...base, coverStory: "nope" }).success).toBe(false);
+  });
+  it("refuses undocumented interviews", () => {
+    const qa = { id: "i-1", section: "culture", title: "مقابلة", body: [{ type: "qa", items: [{ q: "س", a: "ج" }] }] };
+    expect(IssueSchema.safeParse({ ...base, articles: [qa] }).success).toBe(false);
+    expect(IssueSchema.safeParse({ ...base, articles: [{ ...qa, sources: [{ name: "تسجيل المقابلة" }] }] }).success).toBe(true);
   });
   it("rejects path traversal in pdf file names", () => {
     expect(IssueSchema.safeParse({ ...base, pdf: { file: "../secret.pdf" } }).success).toBe(false);

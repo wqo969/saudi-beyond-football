@@ -8,6 +8,11 @@ import type { Block } from "./schema";
  *   | التسمية | القيمة    (facts; optional first line: || عنوان الجدول)
  *   لغز: السؤال / تلميح: ... / الحل: ...
  *   [نص الرابط](https://...)
+ *   %% عنوان   /  % القيمة | التسمية | ملاحظة       (stats / infographic)
+ *   @@ عنوان   /  @ الزمن | الحدث                   (timeline)
+ *   س: سؤال  /  ج: جواب                            (interview Q&A)
+ *   صورة: تعليق                                     (gallery)
+ *   التفسير: ...                                    (puzzle explanation)
  *   Blank line = new paragraph.
  */
 export function textToBlocks(text: string): Block[] {
@@ -37,12 +42,43 @@ export function textToBlocks(text: string): Block[] {
         }
       }
       if (items.length) blocks.push({ type: "facts", items, ...(title ? { title } : {}) });
+    } else if (lines.every((l) => l.startsWith("%"))) {
+      let title: string | undefined;
+      const items: { value: string; label: string; note?: string }[] = [];
+      for (const l of lines) {
+        if (l.startsWith("%%")) title = l.slice(2).trim();
+        else {
+          const [value, label, note] = l.slice(1).split("|").map((x) => x.trim());
+          if (value && label) items.push({ value, label, ...(note ? { note } : {}) });
+        }
+      }
+      if (items.length) blocks.push({ type: "stats", items, ...(title ? { title } : {}) });
+    } else if (lines.every((l) => l.startsWith("@"))) {
+      let title: string | undefined;
+      const items: { when: string; text: string }[] = [];
+      for (const l of lines) {
+        if (l.startsWith("@@")) title = l.slice(2).trim();
+        else {
+          const [when, text] = l.slice(1).split("|").map((x) => x.trim());
+          if (when && text) items.push({ when, text });
+        }
+      }
+      if (items.length >= 2) blocks.push({ type: "timeline", items, ...(title ? { title } : {}) });
+    } else if (first.startsWith("س:") && lines.every((l) => l.startsWith("س:") || l.startsWith("ج:"))) {
+      const items: { q: string; a: string }[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith("س:")) items.push({ q: lines[i].slice(2).trim(), a: lines[i + 1]?.startsWith("ج:") ? lines[++i].slice(2).trim() : "" });
+      }
+      blocks.push({ type: "qa", items: items.filter((x) => x.q && x.a) });
+    } else if (lines.every((l) => l.startsWith("صورة:"))) {
+      blocks.push({ type: "gallery", items: lines.map((l) => ({ caption: l.slice(5).trim() })) });
     } else if (first.startsWith("لغز:")) {
       const get = (p: string) => lines.find((l) => l.startsWith(p))?.slice(p.length).trim();
       const question = get("لغز:") ?? "";
       const answer = get("الحل:") ?? "";
       const hint = get("تلميح:");
-      blocks.push({ type: "puzzle", question, answer, ...(hint ? { hint } : {}) });
+      const explanation = get("التفسير:");
+      blocks.push({ type: "puzzle", question, answer, ...(hint ? { hint } : {}), ...(explanation ? { explanation } : {}) });
     } else if (lines.length === 1 && /^\[[^\]]+\]\(https?:\/\/[^)\s]+\)$/.test(first)) {
       const m = first.match(/^\[([^\]]+)\]\(([^)]+)\)$/)!;
       blocks.push({ type: "link", label: m[1], url: m[2] });
@@ -68,7 +104,15 @@ export function blocksToText(blocks: Block[]): string {
         case "facts":
           return [...(b.title ? [`|| ${b.title}`] : []), ...b.items.map((i) => `| ${i.label} | ${i.value}`)].join("\n");
         case "puzzle":
-          return [`لغز: ${b.question}`, ...(b.hint ? [`تلميح: ${b.hint}`] : []), `الحل: ${b.answer}`].join("\n");
+          return [`لغز: ${b.question}`, ...(b.hint ? [`تلميح: ${b.hint}`] : []), `الحل: ${b.answer}`, ...(b.explanation ? [`التفسير: ${b.explanation}`] : [])].join("\n");
+        case "stats":
+          return [...(b.title ? [`%% ${b.title}`] : []), ...b.items.map((i) => `% ${i.value} | ${i.label}${i.note ? ` | ${i.note}` : ""}`)].join("\n");
+        case "timeline":
+          return [...(b.title ? [`@@ ${b.title}`] : []), ...b.items.map((i) => `@ ${i.when} | ${i.text}`)].join("\n");
+        case "qa":
+          return b.items.map((i) => `س: ${i.q}\nج: ${i.a}`).join("\n");
+        case "gallery":
+          return b.items.map((i) => `صورة: ${i.caption}`).join("\n");
         case "link":
           return `[${b.label}](${b.url})`;
       }

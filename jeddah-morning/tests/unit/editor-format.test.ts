@@ -9,7 +9,11 @@ describe("editor text format", () => {
     { type: "quote", text: "اقتباس", cite: "القائل" },
     { type: "list", items: ["واحد", "اثنان"] },
     { type: "facts", title: "حقائق", items: [{ label: "أ", value: "ب" }] },
-    { type: "puzzle", question: "س؟", hint: "ت", answer: "ح" },
+    { type: "puzzle", question: "س؟", hint: "ت", answer: "ح", explanation: "لأن…" },
+    { type: "stats", title: "أرقام", items: [{ value: "—", label: "مؤشر", note: "ملاحظة" }, { value: "٣", label: "آخر" }] },
+    { type: "timeline", title: "تسلسل", items: [{ when: "٠٨:٠٠", text: "أ" }, { when: "٠٩:٠٠", text: "ب" }] },
+    { type: "qa", items: [{ q: "سؤال؟", a: "جواب." }] },
+    { type: "gallery", items: [{ caption: "لوحة ١" }, { caption: "لوحة ٢" }] },
     { type: "link", label: "رابط", url: "https://example.com/x" },
   ];
   it("round-trips every block type", () => {

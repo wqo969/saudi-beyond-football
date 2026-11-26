@@ -7,6 +7,8 @@ export function issueOfflineUrls(issue: Issue): string[] {
     "/",
     base,
     `${base}/read`,
+    `${base}/brief`,
+    ...(issue.surprise ? [`${base}/surprise`] : []),
     ...issue.articles.map((a) => `${base}/a/${a.id}`),
     ...(issue.pdf ? [`${base}/pdf`, `/api/pdf/${issue.slug}`] : []),
     "/search",

@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { getRepository } from "@/lib/content";
+import { getAllPlans, getRepository } from "@/lib/content";
+import { nextStatus } from "@/lib/publishing";
 import { ReadOnlyError } from "@/lib/content/repository";
 import { formatIssues, IssueSchema, type Issue } from "@/lib/schema";
 import { requireAdmin } from "@/lib/session";
@@ -63,8 +64,54 @@ async function update(slug: string, patch: (i: Issue) => Issue): Promise<SaveRes
   return persist(patch(issue));
 }
 
+/** Snapshot of the current engine plan, so a published issue never changes look later. */
+async function frozenDesign(slug: string, issue: Issue): Promise<Issue["design"]> {
+  if (issue.design.frozen) return issue.design;
+  const plan = (await getAllPlans()).get(slug);
+  if (!plan) return issue.design;
+  return {
+    ...issue.design,
+    frozen: {
+      palette: plan.palette.id, coverLayout: plan.coverLayout, contentsVariant: plan.contentsVariant, closingVariant: plan.closingVariant,
+      pages: plan.pages.map((p) => ({ layout: p.layout, ...(p.articleId ? { articleId: p.articleId } : {}), ...(p.part != null ? { part: p.part } : {}) })),
+      frozenAt: new Date().toISOString(),
+    },
+  };
+}
+
 export async function publishNowAction(slug: string) {
-  return update(slug, (i) => ({ ...i, status: "published", publishAt: i.publishAt ?? new Date().toISOString() }));
+  await requireAdmin();
+  const issue = await getRepository().getIssue(slug);
+  if (!issue) return { ok: false, errors: ["العدد غير موجود"] };
+  // Idempotent: publishing an already-published issue is a no-op (no double publication).
+  if (issue.status === "published") return { ok: true, slug };
+  const design = await frozenDesign(slug, issue);
+  return update(slug, (i) => ({ ...i, design, status: "published", publishAt: i.publishAt && new Date(i.publishAt) <= new Date() ? i.publishAt : new Date().toISOString() }));
+}
+
+export async function advanceStatusAction(slug: string): Promise<SaveResult> {
+  await requireAdmin();
+  const issue = await getRepository().getIssue(slug);
+  if (!issue) return { ok: false, errors: ["العدد غير موجود"] };
+  const next = nextStatus(issue.status);
+  if (!next) return { ok: false, errors: ["لا مرحلة بعد هذه"] };
+  if (next === "scheduled" && !issue.publishAt) return { ok: false, errors: ["حدد موعد النشر قبل الجدولة"] };
+  // Approval freezes the design so what was reviewed is exactly what gets published.
+  const design = next === "approved" ? await frozenDesign(slug, issue) : issue.design;
+  if (next === "published") return publishNowAction(slug);
+  return update(slug, (i) => ({ ...i, design, status: next }));
+}
+
+export async function freezeDesignAction(slug: string, freeze: boolean): Promise<SaveResult> {
+  await requireAdmin();
+  const issue = await getRepository().getIssue(slug);
+  if (!issue) return { ok: false, errors: ["العدد غير موجود"] };
+  const design = freeze ? await frozenDesign(slug, issue) : { ...issue.design, frozen: undefined };
+  return update(slug, (i) => ({ ...i, design }));
+}
+
+export async function archiveAction(slug: string) {
+  return update(slug, (i) => ({ ...i, status: "archived" }));
 }
 
 export async function unpublishAction(slug: string) {

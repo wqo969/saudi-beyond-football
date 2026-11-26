@@ -28,5 +28,17 @@ for (const [name, size, maskable] of [["icon-192.png", 192, false], ["icon-512.p
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: path.join(out, name), omitBackground: false });
 }
+// Horizontal wordmark (light + dark) for documents and the PDF masthead.
+mkdirSync(path.join(root, "public", "brand"), { recursive: true });
+for (const [name, bg, fg] of [["wordmark-light.png", "#f5efe0", "#1e3a2c"], ["wordmark-dark.png", "#12251b", "#f5efe0"]]) {
+  await page.setViewportSize({ width: 1200, height: 360 });
+  await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${fontFaces(root)}html,body{margin:0}
+  .w{width:1200px;height:360px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;color:${fg}}
+  .a{font-family:Amiri;font-weight:700;font-size:140px;line-height:1;margin-top:-30px}.r{width:620px;border-top:3px solid #c9aa72;margin:64px 0 18px}
+  .l{font-family:Playfair;letter-spacing:.42em;color:#a8854c;font-size:30px}.t{font-family:Playfair;font-style:italic;font-size:20px;margin-top:14px;opacity:.75}</style></head>
+  <body><div class="w"><div class="a" dir="rtl">صباح جدة</div><div class="r"></div><div class="l">JEDDAH MORNING</div><div class="t">Your world. Your morning. Your magazine.</div></div></body></html>`);
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({ path: path.join(root, "public", "brand", name) });
+}
 await browser.close();
-console.log("[icons] generated in public/icons/");
+console.log("[icons] generated in public/icons/ and public/brand/");

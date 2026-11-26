@@ -22,7 +22,7 @@ export interface SearchDoc {
   issueSlug: string;
   issueTitle: string;
   date: string;
-  edition: "morning" | "evening";
+  edition: Issue["edition"];
   articleId: string;
   section: SectionKey;
   title: string;
@@ -44,8 +44,16 @@ export function blockText(b: Block): string {
       return b.items.join(" ");
     case "facts":
       return [b.title ?? "", ...b.items.map((i) => `${i.label} ${i.value}`)].join(" ");
+    case "stats":
+      return [b.title ?? "", ...b.items.map((i) => `${i.label} ${i.value} ${i.note ?? ""}`)].join(" ");
+    case "timeline":
+      return [b.title ?? "", ...b.items.map((i) => `${i.when} ${i.text}`)].join(" ");
+    case "qa":
+      return b.items.map((i) => `${i.q} ${i.a}`).join(" ");
+    case "gallery":
+      return b.items.map((i) => i.caption).join(" ");
     case "puzzle":
-      return `${b.question} ${b.hint ?? ""}`; // never index answers
+      return `${b.question} ${b.hint ?? ""}`; // never index answers or explanations
     case "link":
       return b.label;
   }

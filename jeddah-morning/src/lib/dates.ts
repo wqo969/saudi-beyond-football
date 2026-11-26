@@ -46,6 +46,22 @@ export function toArabicDigits(n: number | string): string {
   return String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
 }
 
-export function editionName(edition: "morning" | "evening"): string {
-  return edition === "morning" ? "العدد الصباحي" : "العدد المسائي";
+export function editionName(edition: "morning" | "evening" | "special"): string {
+  return edition === "morning" ? "العدد الصباحي" : edition === "evening" ? "العدد المسائي" : "عدد خاص";
+}
+
+export function weekdayName(key: string): string {
+  return new Intl.DateTimeFormat("ar-SA-u-ca-gregory", { timeZone: "UTC", weekday: "long" }).format(fromKey(key));
+}
+
+/** Minutes since midnight in Riyadh. */
+export function riyadhMinutes(d: Date = new Date()): number {
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d).split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function addDays(key: string, n: number): string {
+  const d = fromKey(key);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
 }

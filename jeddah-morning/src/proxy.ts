@@ -3,7 +3,7 @@ import { getAuthConfig, SESSION_COOKIE, verifySession } from "@/lib/auth";
 
 /** Paths reachable without a session. Everything else (pages, APIs, PDFs) requires login. */
 const PUBLIC_PATHS = ["/login", "/offline", "/manifest.webmanifest", "/sw.js", "/robots.txt", "/favicon.ico"];
-const PUBLIC_PREFIXES = ["/icons/", "/pdfjs/", "/api/cron/"]; // cron endpoint checks its own shared secret
+const PUBLIC_PREFIXES = ["/icons/", "/brand/", "/pdfjs/", "/api/cron/"]; // cron endpoint checks its own shared secret
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));

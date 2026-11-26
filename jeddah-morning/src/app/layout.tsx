@@ -8,10 +8,14 @@ import "@fontsource/ibm-plex-sans-arabic/600.css";
 import "@fontsource/playfair-display/600.css";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { Splash } from "@/components/Splash";
+import { PALETTES, paletteCss } from "@/lib/engine/palettes";
+
+const PALETTE_CSS = PALETTES.map(paletteCss).join("");
 
 export const metadata: Metadata = {
-  title: { default: "صباح جدة", template: "%s · صباح جدة" },
-  description: "مجلة رقمية شخصية يومية — JEDDAH MORNING",
+  title: { default: "صباح جدة — JEDDAH MORNING", template: "%s · صباح جدة" },
+  description: "Your world. Your morning. Your magazine. — مجلة رقمية شخصية يومية",
   applicationName: "صباح جدة",
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
   appleWebApp: { capable: true, title: "صباح جدة", statusBarStyle: "black-translucent" },
@@ -40,9 +44,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <style dangerouslySetInnerHTML={{ __html: PALETTE_CSS }} />
       </head>
       <body className="paper-grain antialiased">
         {children}
+        <Splash />
         <ServiceWorkerRegister />
       </body>
     </html>
