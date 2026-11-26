@@ -31,7 +31,23 @@
 - مصدر إلزامي للمواد الحقيقية في الأقسام الحية، وللمقابلات.
 - معرفات مقالات فريدة، وslug يطابق التاريخ والنوع، ومنع تجاوز المسارات في أسماء PDF.
 
-## لاحقًا (P5): Supabase Postgres
+## الإنتاج: Vercel Blob خاص (D-018)
+| المسار | المحتوى |
+|---|---|
+| `index/issues.json` | فهرس الأعداد `{slug, updatedAt}` |
+| `issues/<slug>.json` | العدد الحالي (يطابق `IssueSchema`) |
+| `history/<slug>/<ts>.json` | كل إصدار سابق + نسخة الحذف (`deleted-…`) — سجل الإصدارات والاستعادة |
+| `pdfs/<slug>.pdf` | نسخة PDF |
+| `media/<name>` | الصور التحريرية المرخصة |
+| `kv/auth.json` | تجزئات كلمات المرور + إصدار الجلسة |
+| `kv/secrets.json` | سر الجلسات، مفتاح خط الإنتاج، مفاتيح VAPID (مولّدة على الخادم) |
+| `kv/push-subscriptions.json`، `kv/notified.json` | اشتراكات الأجهزة وسجل منع الإشعار المكرر |
+| `kv/ops-YYYY-MM.json` | سجل العمليات والأخطاء |
+| `kv/sources.json`، `kv/automation.json`، `kv/login-attempts.json` | المصادر الموثوقة، مفتاح الأتمتة، القفل (عناوين IP مجزأة فقط) |
+
+المخزن **خاص**: كل قراءة وكتابة تتطلب `BLOB_READ_WRITE_TOKEN` الذي يحقنه Vercel في الخادم فقط. لا رابط عام لأي ملف؛ الصور وPDF تُخدم عبر مسارات تتحقق من الجلسة.
+
+## مرجع مستقبلي: Supabase Postgres (غير مستخدم — D-018)
 `supabase/migrations/0001_init.sql` (مكتوب، **غير مطبّق**):
 
 | الجدول | الغرض |

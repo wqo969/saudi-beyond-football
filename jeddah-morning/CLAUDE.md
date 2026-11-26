@@ -43,5 +43,10 @@ npm run content:demo        # إعادة توليد الأعداد السبعة 
 2. أضف المُصيّر في `components/magazine/articles.tsx` وسجّله في `MagazinePage.tsx`.
 3. `npm test` — اختبار المكتبة يفشل إن نسيت المُصيّر.
 
+## الإنتاج
+- التخزين: Vercel Blob **خاص** (`JM_CONTENT_BACKEND=blob`). محليًا لاختبار نفس المسار: `blob-fs`.
+- لا تضع محتوى حقيقيًا أو أسرارًا في المستودع (عام).
+- النشر: DEPLOY.md. خط الإنتاج اليومي: AUTOMATION.md و`ops/daily-issue-prompt.md`.
+
 ## الحالة
-انظر PROGRESS.md (المراحل P0–P11). آخر ما أُنجز: P0–P3 محليًا.
+انظر PROGRESS.md. P0–P10 منفذة؛ P11 متوقف على رمز Vercel.
